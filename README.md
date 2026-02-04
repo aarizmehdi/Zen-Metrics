@@ -2,7 +2,7 @@
 
 > **Proprietary Software** | **Status:** Active Development | **Author:** Aariz Mehdi
 
-![Zen Metrics Banner](https://zen-metrics.vercel.app/og-preview.png)
+![Zen Metrics Banner](./public/logo.png)
 
 ## Overview
 
