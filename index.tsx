@@ -431,9 +431,6 @@ const App = () => {
   // Async Data Generation to prevent blocking main thread
   useEffect(() => {
     let currentIdx = 0;
-    const isMobile = window.innerWidth < 768;
-    const activeChunkSize = isMobile ? 500 : CHUNK_SIZE; // Smaller chunks for mobile
-    const delay = isMobile ? 16 : 0; // Yield to main thread more often on mobile (approx 1 frame)
 
     function generateNextChunk() {
       if (currentIdx >= TOTAL_ROWS) {
@@ -442,13 +439,13 @@ const App = () => {
       }
 
       // Generate a small chunk
-      const chunk = generateChunk(currentIdx, activeChunkSize);
+      const chunk = generateChunk(currentIdx, CHUNK_SIZE);
       setNodes(prev => [...prev, ...chunk]);
-      currentIdx += activeChunkSize;
+      currentIdx += CHUNK_SIZE;
       setProgress((currentIdx / TOTAL_ROWS) * 100);
 
-      // Schedule next chunk
-      setTimeout(generateNextChunk, delay);
+      // Schedule next chunk for next idle frame
+      setTimeout(generateNextChunk, 0);
     }
 
     generateNextChunk();
