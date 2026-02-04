@@ -19,9 +19,15 @@
     "typescript": "~5.8.2",
     "vite": "^6.4.1"
   },
-  "description": "<div align=\"center\"> <img width=\"1200\" height=\"475\" alt=\"GHBanner\" src=\"https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6\" /> </div>",
+  "description": "A high-performance system telemetry dashboard with advanced visualization.",
   "main": "index.js",
-  "keywords": [],
-  "author": "",
-  "license": "ISC"
+  "keywords": [
+    "dashboard",
+    "analytics",
+    "react",
+    "framer-motion",
+    "visualization"
+  ],
+  "author": "Aariz Mehdi",
+  "license": "UNLICENSED"
 }
