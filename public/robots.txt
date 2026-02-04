@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://zen-metrics.vercel.app/sitemap.xml

@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <!-- Primary Meta Tags -->
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/png" href="/favicon.png" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Zen Metrics | Advanced Performance Dashboard</title>
+  <meta name="title" content="Zen Metrics | Advanced Performance Dashboard">
+  <meta name="description"
+    content="Real-time high-performance monitoring system featuring futuristic visualization, node telemetry, and throughput analytics. Built for speed and precision.">
+  <meta name="keywords"
+    content="dashboard, performance, react, metrics, visualization, dark mode, futuristic, ui, zen metrics">
+  <meta name="robots" content="index, follow">
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  <meta name="language" content="English">
+  <meta name="author" content="Zen Metrics Systems">
+
+  <!-- Open Graph / Facebook -->
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://zen-metrics.vercel.app/">
+  <meta property="og:title" content="Zen Metrics | Advanced Performance Dashboard">
+  <meta property="og:description"
+    content="Real-time high-performance monitoring system featuring futuristic visualization, node telemetry, and throughput analytics.">
+  <meta property="og:image" content="https://zen-metrics.vercel.app/logo.png">
+
+  <!-- Twitter -->
+  <meta property="twitter:card" content="summary_large_image">
+  <meta property="twitter:url" content="https://zen-metrics.vercel.app/">
+  <meta property="twitter:title" content="Zen Metrics | Advanced Performance Dashboard">
+  <meta property="twitter:description"
+    content="Real-time high-performance monitoring system featuring futuristic visualization, node telemetry, and throughput analytics.">
+  <meta property="twitter:image" content="https://zen-metrics.vercel.app/logo.png">
+
+  <!-- Fonts: Inter for UI, JetBrains Mono for Data -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap"
+    rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    :root {
+      --bg-deep: #02010a;
+      /* Premium Void Black */
+      --accent-purple: #6d28d9;
+      --scrollbar-track: transparent;
+      --scrollbar-thumb: #4c1d95;
+    }
+
+    body {
+      margin: 0;
+      background-color: var(--bg-deep);
+      color: #e2e8f0;
+      font-family: 'Outfit', sans-serif;
+      overflow: hidden;
+      /* App Shell Lock */
+    }
+
+    /* Mesh Gradient Background */
+    body::before {
+      content: "";
+      position: absolute;
+      width: 120%;
+      height: 120%;
+      top: -10%;
+      left: -10%;
+      z-index: -1;
+      background:
+        radial-gradient(circle at 15% 50%, rgba(56, 11, 120, 0.08), transparent 25%),
+        radial-gradient(circle at 85% 30%, rgba(6, 95, 70, 0.05), transparent 25%);
+      filter: blur(100px);
+      /* Smoother blur */
+      pointer-events: none;
+    }
+
+    .font-mono {
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    /* Custom Purple Scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: var(--scrollbar-track);
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: var(--scrollbar-thumb);
+      border-radius: 3px;
+      border: 1px solid var(--bg-deep);
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: #8b5cf6;
+    }
+
+    /* Utilities */
+    .glass-panel {
+      background: rgba(3, 0, 20, 0.75);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    /* Advanced Neon Ripple Effect */
+    .neon-container {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .neon-core {
+      width: 8px;
+      height: 8px;
+      background-color: #10b981;
+      border-radius: 50%;
+      box-shadow: 0 0 10px #10b981, 0 0 20px #10b981;
+      z-index: 10;
+    }
+
+    .neon-ripple {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      background-color: #10b981;
+      border-radius: 50%;
+      opacity: 0.6;
+      animation: ripple 2s cubic-bezier(0, 0.2, 0.8, 1) infinite;
+    }
+
+    @keyframes ripple {
+      0% {
+        transform: scale(1);
+        opacity: 0.8;
+      }
+
+      100% {
+        transform: scale(3.5);
+        opacity: 0;
+      }
+    }
+  </style>
+  <script type="importmap">
+{
+  "imports": {
+    "react/": "https://esm.sh/react@^19.2.4/",
+    "react": "https://esm.sh/react@^19.2.4",
+    "react-dom/": "https://esm.sh/react-dom@^19.2.4/",
+    "framer-motion": "https://esm.sh/framer-motion@^12.29.2"
+  }
+}
+</script>
+  <link rel="stylesheet" href="/index.css">
+</head>
+
+<body>
+  <div id="root"></div>
+  <script type="module" src="/index.tsx"></script>
+</body>
+
+</html>
