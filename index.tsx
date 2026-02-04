@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useRef, useEffect } from 'react';
+import React, { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import { createRoot } from 'react-dom/client';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -14,88 +14,147 @@ interface NodeData {
   load: number;
 }
 
-// --- Mock Data Generator (Deterministic for 100k rows) ---
-const generateData = (count: number): NodeData[] => {
-  const data: NodeData[] = [];
-  for (let i = 0; i < count; i++) {
-    const isCritical = Math.random() > 0.98;
-    const isIdle = Math.random() > 0.85;
-    const status = isCritical ? 'critical' : isIdle ? 'idle' : 'active';
+// --- Hooks ---
 
-    // Generate a pseudo-random hash
-    const hash = `0x${Math.floor(Math.random() * 0xffffff).toString(16).padStart(6, '0')}${Math.floor(Math.random() * 0xffffff).toString(16).padStart(6, '0')}`.toUpperCase();
+// Debounce Hook for Search
+function useDebounce<T>(value: T, delay: number): T {
+  const [debouncedValue, setDebouncedValue] = useState(value);
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedValue(value);
+    }, delay);
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [value, delay]);
+  return debouncedValue;
+}
 
-    data.push({
-      id: i.toString(),
-      hash,
-      nodeIdentity: `US-EAST-${(i % 50) + 1}-SRV-${Math.floor(1000 + Math.random() * 9000)}`,
-      status,
-      latency: status === 'critical' ? Math.floor(200 + Math.random() * 800) : Math.floor(10 + Math.random() * 50),
-      load: status === 'critical' ? Math.floor(90 + Math.random() * 10) : Math.floor(20 + Math.random() * 60),
-    });
-  }
-  return data;
-};
-
-// --- Custom Virtualizer Hook ---
+// Custom Virtualizer Hook (Optimized)
 const useVirtualizer = (
   count: number,
   itemHeight: number,
   scrollContainerRef: React.RefObject<HTMLDivElement | null>,
-  overscan = 15
+  overscan = 20
 ) => {
   const [scrollTop, setScrollTop] = useState(0);
   const [containerHeight, setContainerHeight] = useState(0);
 
   useEffect(() => {
+    const container = scrollContainerRef.current;
+    if (!container) return;
+
+    // Use requestAnimationFrame for smooth scrolling updates
+    let rAF: number;
     const handleScroll = () => {
-      if (scrollContainerRef.current) {
-        setScrollTop(scrollContainerRef.current.scrollTop);
-      }
+      rAF = requestAnimationFrame(() => {
+        setScrollTop(container.scrollTop);
+      });
     };
 
     const handleResize = () => {
-      if (scrollContainerRef.current) {
-        setContainerHeight(scrollContainerRef.current.clientHeight);
-      }
+      setContainerHeight(container.clientHeight);
     };
 
-    const container = scrollContainerRef.current;
-    if (container) {
-      container.addEventListener('scroll', handleScroll, { passive: true });
-      window.addEventListener('resize', handleResize);
-      // Initial set
-      setContainerHeight(container.clientHeight);
-    }
+    container.addEventListener('scroll', handleScroll, { passive: true });
+    window.addEventListener('resize', handleResize);
+    setContainerHeight(container.clientHeight);
 
     return () => {
-      if (container) {
-        container.removeEventListener('scroll', handleScroll);
-      }
+      container.removeEventListener('scroll', handleScroll);
       window.removeEventListener('resize', handleResize);
+      cancelAnimationFrame(rAF);
     };
   }, [scrollContainerRef]);
 
-  // Calculate visible range
   const startIndex = Math.max(0, Math.floor(scrollTop / itemHeight) - overscan);
   const endIndex = Math.min(count - 1, Math.ceil((scrollTop + containerHeight) / itemHeight) + overscan);
 
-  const items = [];
-  for (let i = startIndex; i <= endIndex; i++) {
-    items.push({
-      index: i,
-      start: i * itemHeight,
-    });
-  }
+  const items = useMemo(() => {
+    const res = [];
+    for (let i = startIndex; i <= endIndex; i++) {
+      res.push({ index: i, start: i * itemHeight });
+    }
+    return res;
+  }, [startIndex, endIndex, itemHeight]);
 
   const totalHeight = count * itemHeight;
 
   return { items, totalHeight, startIndex };
 };
 
+// --- Mock Data Generator (Chunked) ---
+const CHUNK_SIZE = 2000;
+const TOTAL_ROWS = 100000;
+
+const generateChunk = (startIdx: number, size: number): NodeData[] => {
+  const chunk: NodeData[] = [];
+  for (let i = 0; i < size; i++) {
+    const index = startIdx + i;
+    const isCritical = Math.random() > 0.98;
+    const isIdle = Math.random() > 0.85;
+    const status = isCritical ? 'critical' : isIdle ? 'idle' : 'active';
+
+    // Optimized hash generation
+    const hash = `0x${Math.floor(Math.random() * 0xffffff).toString(16).padStart(6, '0')}${Math.floor(Math.random() * 0xffffff).toString(16).padStart(6, '0')}`.toUpperCase();
+
+    chunk.push({
+      id: index.toString(),
+      hash,
+      nodeIdentity: `US-EAST-${(index % 50) + 1}-SRV-${Math.floor(1000 + Math.random() * 9000)}`,
+      status,
+      latency: status === 'critical' ? Math.floor(200 + Math.random() * 800) : Math.floor(10 + Math.random() * 50),
+      load: status === 'critical' ? Math.floor(90 + Math.random() * 10) : Math.floor(20 + Math.random() * 60),
+    });
+  }
+  return chunk;
+};
+
 // --- Components ---
 
-const PulseHeader = ({ onSearch }: { onSearch: (val: string) => void }) => {
+const LoadingScreen = ({ progress }: { progress: number }) => {
+  return (
+    <motion.div
+      initial={{ opacity: 1 }}
+      exit={{ opacity: 0, transition: { duration: 0.8, ease: "easeInOut" } }}
+      className="fixed inset-0 z-[1000] bg-[#02010a] flex flex-col items-center justify-center font-mono"
+    >
+      <div className="w-64 space-y-4">
+        <div className="flex justify-between text-xs text-purple-400 tracking-widest uppercase">
+          <span>System Initialization</span>
+          <span>{Math.round(progress)}%</span>
+        </div>
+
+        {/* Progress Bar Container */}
+        <div className="h-[2px] w-full bg-slate-800 relative overflow-hidden">
+          <motion.div
+            className="absolute inset-y-0 left-0 bg-purple-500 shadow-[0_0_15px_#a855f7]"
+            initial={{ width: 0 }}
+            animate={{ width: `${progress}%` }}
+            transition={{ type: "tween", ease: "linear", duration: 0.1 }}
+          />
+        </div>
+
+        <div className="space-y-1">
+          <div className="flex items-center gap-2 text-[10px] text-slate-500">
+            <div className={`w-1.5 h-1.5 rounded-full ${progress > 20 ? 'bg-emerald-500' : 'bg-slate-700'}`} />
+            <span>CORE MODULES LOADED</span>
+          </div>
+          <div className="flex items-center gap-2 text-[10px] text-slate-500">
+            <div className={`w-1.5 h-1.5 rounded-full ${progress > 50 ? 'bg-emerald-500' : 'bg-slate-700'}`} />
+            <span>ESTABLISHING NODE UPLINK</span>
+          </div>
+          <div className="flex items-center gap-2 text-[10px] text-slate-500">
+            <div className={`w-1.5 h-1.5 rounded-full ${progress > 80 ? 'bg-emerald-500' : 'bg-slate-700'}`} />
+            <span>SYNCING TELEMETRY STREAMS</span>
+          </div>
+        </div>
+      </div>
+    </motion.div>
+  );
+};
+
+const PulseHeader = React.memo(({ onSearch }: { onSearch: (val: string) => void }) => {
   return (
     <header
       className="flex-none h-auto md:h-20 w-full glass-panel z-50 flex flex-col md:flex-row items-start md:items-center justify-between px-4 md:px-8 py-3 md:py-0 sticky top-0 gap-3 md:gap-0"
@@ -150,9 +209,9 @@ const PulseHeader = ({ onSearch }: { onSearch: (val: string) => void }) => {
       </div>
     </header>
   );
-};
+});
 
-const EqualizerGraph = () => {
+const EqualizerGraph = React.memo(() => {
   const barCount = 48;
   const bars = useMemo(() => Array.from({ length: barCount }).map((_, i) => ({
     id: i,
@@ -201,9 +260,9 @@ const EqualizerGraph = () => {
       <div className="absolute bottom-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-purple-500/40 to-transparent" />
     </div>
   );
-};
+});
 
-const StatusBadge = ({ status }: { status: Status }) => {
+const StatusBadge = React.memo(({ status }: { status: Status }) => {
   const styles = {
     active: 'bg-emerald-900/20 text-emerald-400 ring-1 ring-emerald-500/10 shadow-[0_0_15px_rgba(16,185,129,0.05)]',
     idle: 'bg-slate-800/20 text-slate-500 ring-1 ring-slate-700/20',
@@ -216,9 +275,9 @@ const StatusBadge = ({ status }: { status: Status }) => {
       {status}
     </span>
   );
-};
+});
 
-const LoadBar = ({ load, status }: { load: number, status: Status }) => {
+const LoadBar = React.memo(({ load, status }: { load: number, status: Status }) => {
   let color = 'bg-gradient-to-r from-purple-600 to-cyan-500';
   if (status === 'critical') color = 'bg-gradient-to-r from-red-600 to-orange-500 shadow-[0_0_10px_rgba(239,68,68,0.4)]';
   if (status === 'idle') color = 'bg-slate-700';
@@ -231,9 +290,9 @@ const LoadBar = ({ load, status }: { load: number, status: Status }) => {
       />
     </div>
   );
-};
+});
 
-const DetailPanel = ({ node, onClose }: { node: NodeData, onClose: () => void }) => {
+const DetailPanel = React.memo(({ node, onClose }: { node: NodeData, onClose: () => void }) => {
   // Simulated sparkline data
   const history = useMemo(() => Array.from({ length: 24 }).map(() => Math.random() * 100), []);
 
@@ -336,9 +395,9 @@ const DetailPanel = ({ node, onClose }: { node: NodeData, onClose: () => void })
       </motion.aside>
     </>
   );
-};
+});
 
-const Footer = () => (
+const Footer = React.memo(() => (
   <footer className="w-full py-8 mt-12 mb-4 border-t border-white/5">
     <div className="flex flex-col items-center justify-center gap-3 text-center opacity-60 hover:opacity-100 transition-opacity">
       <p className="text-slate-500 text-[10px] font-mono tracking-widest uppercase">
@@ -353,39 +412,70 @@ const Footer = () => (
       </div>
     </div>
   </footer>
-);
+));
 
 // --- Main Application ---
 
 const App = () => {
-  // 1. Data
-  const ROW_COUNT = 100000;
   const ROW_HEIGHT = 48; // px
-  // Store all nodes in a ref or memo so we don't regenerate on every render
-  const allNodes = useMemo(() => generateData(ROW_COUNT), []);
 
+  // State
+  const [nodes, setNodes] = useState<NodeData[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [progress, setProgress] = useState(0);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
+  const debouncedSearch = useDebounce(searchQuery, 300);
+
+  // Async Data Generation to prevent blocking main thread
+  useEffect(() => {
+    let currentIdx = 0;
+
+    function generateNextChunk() {
+      if (currentIdx >= TOTAL_ROWS) {
+        setLoading(false);
+        return;
+      }
+
+      // Generate a small chunk
+      const chunk = generateChunk(currentIdx, CHUNK_SIZE);
+      setNodes(prev => [...prev, ...chunk]);
+      currentIdx += CHUNK_SIZE;
+      setProgress((currentIdx / TOTAL_ROWS) * 100);
+
+      // Schedule next chunk for next idle frame
+      setTimeout(generateNextChunk, 0);
+    }
+
+    generateNextChunk();
+  }, []);
+
   const filteredNodes = useMemo(() => {
-    if (!searchQuery) return allNodes;
-    const lower = searchQuery.toLowerCase();
-    return allNodes.filter(n =>
+    if (!debouncedSearch) return nodes;
+    const lower = debouncedSearch.toLowerCase();
+    return nodes.filter(n =>
       n.nodeIdentity.toLowerCase().includes(lower) ||
       n.hash.toLowerCase().includes(lower)
     );
-  }, [allNodes, searchQuery]);
+  }, [nodes, debouncedSearch]);
 
   const selectedNode = useMemo(() =>
-    selectedId ? allNodes.find(n => n.id === selectedId) : null,
-    [selectedId, allNodes]);
+    selectedId ? nodes.find(n => n.id === selectedId) : null,
+    [selectedId, nodes]);
 
-  // 2. Virtualization
+  // Virtualization
   const scrollRef = useRef<HTMLDivElement>(null);
   const { items, totalHeight } = useVirtualizer(filteredNodes.length, ROW_HEIGHT, scrollRef);
 
   return (
     <div className="h-screen w-full flex flex-col bg-[#030014] text-slate-300 selection:bg-purple-500/30 selection:text-white overflow-hidden">
+
+      {/* Loading Screen Overlay */}
+      <AnimatePresence>
+        {loading && <LoadingScreen progress={progress} />}
+      </AnimatePresence>
+
       {/* 1. App Shell Header */}
       <PulseHeader onSearch={setSearchQuery} />
 
@@ -401,7 +491,6 @@ const App = () => {
 
         {/* Data Table Section */}
         <section className="pb-0 relative min-h-[500px]">
-          {/* Breathing Gap Layout Wrapper */}
           {/* Breathing Gap Layout Wrapper */}
           <div className="px-0 md:px-12">
 
@@ -473,7 +562,7 @@ const App = () => {
               })}
             </div>
 
-            {items.length === 0 && (
+            {items.length === 0 && !loading && (
               <div className="py-20 text-center text-slate-500 font-mono text-sm">
                 NO NODES FOUND MATCHING QUERY
               </div>

@@ -1,8 +1,0 @@
-<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <rect width="512" height="512" rx="128" fill="#02010A"/>
-  <path d="M156 128H356C367.046 128 376 136.954 376 148V168C376 179.046 367.046 188 356 188H232L350.4 346.4C354.9 352.4 356 360 356 367.5V384C356 395.046 347.046 404 336 404H136C124.954 404 116 395.046 116 384V364C116 352.954 124.954 344 136 344H256L137.6 185.6C133.1 179.6 132 172 132 164.5V148C132 136.954 140.954 128 152 128H156Z" fill="#6D28D9"/>
-  <circle cx="246" cy="266" r="30" fill="#10B981" fill-opacity="0.8">
-    <animate attributeName="r" values="30;45;30" dur="3s" repeatCount="indefinite" />
-    <animate attributeName="opacity" values="0.8;0.4;0.8" dur="3s" repeatCount="indefinite" />
-  </circle>
-</svg>
