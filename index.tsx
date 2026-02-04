@@ -427,6 +427,13 @@ const App = () => {
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
   const debouncedSearch = useDebounce(searchQuery, 300);
+  const [showGraph, setShowGraph] = useState(false);
+
+  // Defer heavy graph rendering to improve initial paint
+  useEffect(() => {
+    const timer = setTimeout(() => setShowGraph(true), 100);
+    return () => clearTimeout(timer);
+  }, []);
 
   // Async Data Generation to prevent blocking main thread
   useEffect(() => {
@@ -486,7 +493,7 @@ const App = () => {
       >
         {/* Graph Section */}
         <section className="mb-0 border-b border-white/5 shadow-2xl relative z-10">
-          <EqualizerGraph />
+          {showGraph && <EqualizerGraph />}
         </section>
 
         {/* Data Table Section */}
