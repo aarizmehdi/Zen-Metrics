@@ -83,4 +83,4 @@ Unauthorized copying, modification, distribution, or use of this file, via any m
 This software is not open source. Access to this repository does not grant any rights to use the code for commercial or personal projects without explicit written permission from the author.
 
 ---
-*Built with passion and precision by Aariz Mehdi.*
+*Built with the passion and precision by Aariz Mehdi.*
